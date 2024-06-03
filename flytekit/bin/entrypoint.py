@@ -132,9 +132,10 @@ def _dispatch_execute(
                 e.error_code, e.verbose_message, e.kind, _execution_models.ExecutionError.ErrorKind.USER
             )
         )
-        logger.error("!! Begin User Error Captured by Flyte !!")
-        logger.error(e.verbose_message)
-        logger.error("!! End Error Captured by Flyte !!")
+        logger.exception(f"Exception when executing task {task_def.name or task_def.id.name}, reason {str(e)}")
+        logger.warning("!! Begin User Error Captured by Flyte !!")
+        logger.warning(e.verbose_message)
+        logger.warning("!! End Error Captured by Flyte !!")
 
     # Handle system-scoped errors
     except _scoped_exceptions.FlyteScopedSystemException as e:
@@ -146,9 +147,10 @@ def _dispatch_execute(
                 e.error_code, e.verbose_message, e.kind, _execution_models.ExecutionError.ErrorKind.SYSTEM
             )
         )
-        logger.error("!! Begin System Error Captured by Flyte !!")
-        logger.error(e.verbose_message)
-        logger.error("!! End Error Captured by Flyte !!")
+        logger.exception(f"Exception when executing task {task_def.name or task_def.id.name}, reason {str(e)}")
+        logger.warning("!! Begin System Error Captured by Flyte !!")
+        logger.warning(e.verbose_message)
+        logger.warning("!! End Error Captured by Flyte !!")
 
     # Interpret all other exceptions (some of which may be caused by the code in the try block outside of
     # dispatch_execute) as recoverable system exceptions.
@@ -163,10 +165,10 @@ def _dispatch_execute(
                 _execution_models.ExecutionError.ErrorKind.SYSTEM,
             )
         )
-        logger.error(f"Exception when executing task {task_def.name or task_def.id.name}, reason {str(e)}")
-        logger.error("!! Begin Unknown System Error Captured by Flyte !!")
-        logger.error(exc_str)
-        logger.error("!! End Error Captured by Flyte !!")
+        logger.exception(f"Exception when executing task {task_def.name or task_def.id.name}, reason {str(e)}")
+        logger.warning("!! Begin Unknown System Error Captured by Flyte !!")
+        logger.warning(exc_str)
+        logger.warning("!! End Error Captured by Flyte !!")
 
     for k, v in output_file_dict.items():
         utils.write_proto_to_file(v.to_flyte_idl(), os.path.join(ctx.execution_state.engine_dir, k))
@@ -279,7 +281,7 @@ def setup_execution(
             raw_output_prefix=raw_output_data_prefix,
         )
     except TypeError:  # would be thrown from DataPersistencePlugins.find_plugin
-        logger.error(f"No data plugin found for raw output prefix {raw_output_data_prefix}")
+        logger.exception(f"No data plugin found for raw output prefix {raw_output_data_prefix}")
         raise
 
     es = ctx.new_execution_state().with_params(
